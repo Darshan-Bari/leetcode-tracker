@@ -1,0 +1,8 @@
+.git/
+*.zip
+*.md
+.gitignore
+.web-ext-ignore
+.web-ext-artifacts/
+replace_chrome.py
+read_pdf.py

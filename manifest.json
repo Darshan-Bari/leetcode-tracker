@@ -1,0 +1,71 @@
+{
+  "name": "LeetCode Tracker",
+  "description": "Automatically sync your LeetCode submissions with a GitHub repository. Track your progress and build your coding portfolio effortlessly.",
+  "version": "2.0.0",
+  "manifest_version": 3,
+  "author": "Darshan Bari",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/logo-leetcode-tracker/Leetcode-tracker-16.png",
+      "48": "assets/logo-leetcode-tracker/Leetcode-tracker-48.png",
+      "128": "assets/logo-leetcode-tracker/Leetcode-tracker-128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/logo-leetcode-tracker/Leetcode-tracker-16.png",
+    "48": "assets/logo-leetcode-tracker/Leetcode-tracker-48.png",
+    "128": "assets/logo-leetcode-tracker/Leetcode-tracker-128.png"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "type": "module"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://api.github.com/*",
+    "https://github.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/*",
+        "https://github.com/*"
+      ],
+      "js": [
+        "scripts/authorize.js",
+        "scripts/loader.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "scripts/leetcode.js",
+        "scripts/models/*",
+        "scripts/utils/*",
+        "scripts/services/*",
+        "scripts/constants/*"
+      ],
+      "matches": [
+        "https://leetcode.com/*",
+        "https://github.com/*"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "leetcode-tracker@darshanbari.dev",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
