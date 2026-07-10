@@ -1,6 +1,24 @@
 import { ENV } from "./environment.js";
 import LeetCodeService from "./scripts/services/leetcode-service.js";
 import SyncService from "./scripts/services/sync-service.js";
+import GitHubAuthService from "./scripts/services/github-auth-service.js";
+import BackendAuthService from "./scripts/services/backend-auth-service.js";
+
+const BACKEND_AUTH_URL = "https://your-backend/auth/github";
+
+const GITHUB_API_CONFIG = {
+  REPOSITORY_URL: "https://api.github.com/repos/",
+  USER_INFO_URL: "https://api.github.com/user",
+  HEADERS: {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
+};
+
+const DATA_CONFIG = {
+  ...ENV,
+  ...GITHUB_API_CONFIG,
+};
 
 /**
  * Manages LeetCode problem statistics and synchronization state.
@@ -203,12 +221,16 @@ class LeetCodeTrackerController {
    */
   constructor() {
     this.stateManager = new LeetCodeStateManager();
-    this.githubService = new GitHubService(ENV);
+    this.githubService = new GitHubService(DATA_CONFIG);
     this.leetCodeService = new LeetCodeService();
     this.syncService = new SyncService();
+    this.githubAuthService = new GitHubAuthService({
+      env: ENV,
+      backendAuthService: new BackendAuthService({ authUrl: BACKEND_AUTH_URL }),
+    });
 
     // Store environment configuration for other components
-    browser.storage.local.set({ leetcode_tracker_data_config: ENV });
+    browser.storage.local.set({ leetcode_tracker_data_config: DATA_CONFIG });
 
     // Initialize sync status tracking
     browser.storage.local.set({
@@ -242,7 +264,7 @@ class LeetCodeTrackerController {
           return Promise.resolve({ success });
         },
         getDataConfig: () => {
-          return Promise.resolve(ENV);
+          return Promise.resolve(DATA_CONFIG);
         },
         getStorageConfig: async () => {
           const result = await browser.storage.local.get(request.properties);
@@ -252,8 +274,8 @@ class LeetCodeTrackerController {
           this.saveUserInfos(request);
           return Promise.resolve({ success: true });
         },
-        exchangeOAuthCode: async () => {
-          return this.exchangeOAuthCode(request.code);
+        startGitHubAuthentication: async () => {
+          return this.authenticateWithGitHub();
         },
         syncSolvedProblems: () => {
           this.startSync();
@@ -286,48 +308,22 @@ class LeetCodeTrackerController {
   }
 
   /**
-   * Exchange the OAuth code for an access token and fetch user info.
-   * Runs in the background script to avoid content script CORS restrictions in Firefox.
+   * Start the GitHub authentication flow and persist the resulting session.
    *
-   * @param {string} code - The OAuth code from the GitHub redirect
-   * @returns {Promise<Object>} Success status
+   * @returns {Promise<Object>} Success status and user details.
    */
-  async exchangeOAuthCode(code) {
+  async authenticateWithGitHub() {
     try {
-      const response = await fetch(ENV.ACCESS_TOKEN_URL, {
-        method: "POST",
-        headers: ENV.HEADERS,
-        body: JSON.stringify({
-          client_id: ENV.CLIENT_ID,
-          client_secret: ENV.CLIENT_SECRET,
-          code: code,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.access_token) {
-        throw new Error("No access token received: " + JSON.stringify(data));
-      }
-
-      const userResponse = await fetch(ENV.USER_INFO_URL, {
-        method: "GET",
-        headers: {
-          ...ENV.HEADERS,
-          Authorization: `token ${data.access_token}`,
-        },
-      });
-
-      const userData = await userResponse.json();
+      const session = await this.githubAuthService.authenticate();
 
       this.saveUserInfos({
-        username: userData.login,
-        token: data.access_token,
+        username: session.username,
+        token: session.accessToken,
       });
 
-      return { success: true };
+      return { success: true, username: session.username };
     } catch (error) {
-      console.error("OAuth exchange failed:", error);
+      console.error("GitHub authentication failed:", error);
       return { success: false, error: error.message };
     }
   }

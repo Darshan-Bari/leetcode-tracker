@@ -478,21 +478,25 @@ class PopupManager {
 
   /**
    * Handle GitHub authentication by opening OAuth flow in new tab.
-   * Constructs proper OAuth URL with required parameters and scopes.
+   * Delegates the complete flow to the background script.
    */
   async handleAuthentication() {
     try {
-      const data = await browser.runtime.sendMessage({ type: "getDataConfig" });
-      if (!data || !data.URL || !data.CLIENT_ID) {
-        alert("Configuration error: environment.js is missing or invalid. Please set up your GitHub OAuth credentials. See README for details.");
-        return;
+      const response = await browser.runtime.sendMessage({
+        type: "startGitHubAuthentication",
+      });
+
+      if (!response?.success) {
+        throw new Error(
+          response?.error || "GitHub authentication could not be completed."
+        );
       }
-      const url = `${data.URL}?client_id=${data.CLIENT_ID}&redirect_uri=${
-        data.REDIRECT_URL
-      }&scope=${data.SCOPES.join(" ")}`;
-      browser.tabs.create({ url, active: true });
+
+      await this.checkAuthStatus();
     } catch (error) {
-      alert("Authentication failed: Could not connect to background service. Please reload the extension.");
+      alert(
+        `Authentication failed: ${error.message || "Could not connect to background service."}`
+      );
     }
   }
 

@@ -1,7 +1,7 @@
 {
   "name": "LeetCode Tracker",
   "description": "Automatically sync your LeetCode submissions with a GitHub repository. Track your progress and build your coding portfolio effortlessly.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "manifest_version": 3,
   "author": "Darshan Bari",
   "action": {
@@ -19,17 +19,26 @@
   },
   "background": {
     "scripts": [
-      "background.js"
+      "background.js",
+      "scripts/gta-background.js"
     ],
     "type": "module"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "identity",
+    "tabs",
+    "webRequest", 
+    "scripting",
+    "activeTab",
+    "cookies"
   ],
   "host_permissions": [
     "https://leetcode.com/*",
     "https://api.github.com/*",
-    "https://github.com/*"
+    "https://github.com/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
   ],
   "content_scripts": [
     {
@@ -38,8 +47,8 @@
         "https://github.com/*"
       ],
       "js": [
-        "scripts/authorize.js",
-        "scripts/loader.js"
+        "scripts/loader.js",
+        "scripts/gta-content.js"
       ],
       "run_at": "document_idle"
     }
@@ -51,7 +60,11 @@
         "scripts/models/*",
         "scripts/utils/*",
         "scripts/services/*",
-        "scripts/constants/*"
+        "scripts/constants/*",
+        "assets/mission_passed.mp3",
+        "assets/wasted.mp3",
+        "assets/mission_passed_green.mp4",
+        "assets/wasted_green.mp4"
       ],
       "matches": [
         "https://leetcode.com/*",
