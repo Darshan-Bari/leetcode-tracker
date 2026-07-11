@@ -114,12 +114,6 @@ def get_settings() -> BackendSettings:
             ),
         )
 
-    if not github_redirect_uri.startswith("moz-extension://"):
-        raise APIError(
-            status_code=500,
-            code="invalid_backend_configuration",
-            message="GITHUB_REDIRECT_URI must point to the Firefox extension redirect URL.",
-        )
 
     return BackendSettings(
         github_client_id=github_client_id,
