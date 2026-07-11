@@ -1,32 +1,4 @@
-// Error silencing for expected extension behaviors
-const originalConsoleError = console.error;
-console.error = (...args) => {
-  // Skip logging common expected errors that don't affect functionality
-  if (args[0] && typeof args[0] === 'string' && 
-      (args[0].includes('Error sending message') || 
-       args[0].includes('Could not establish connection') ||
-       args[0].includes('Receiving end does not exist'))) {
-    console.log('Extension: Expected temporary connection issue (auto-retrying)');
-    return; // Silently ignore these expected errors
-  }
-  originalConsoleError.apply(console, args);
-};
-
-// Also reduce some noisy info logs
-const originalConsoleLog = console.log;
-console.log = (...args) => {
-  // Reduce frequency of some repetitive logs
-  if (args[0] && typeof args[0] === 'string' && 
-      args[0].includes('Retrying in')) {
-    // Only show every few retries to reduce noise
-    if (Math.random() < 0.3) { // 30% chance to show retry logs
-      originalConsoleLog.apply(console, args);
-    }
-    return;
-  }
-  originalConsoleLog.apply(console, args);
-};
-
+// Removed console overrides for AMO compliance
 const pendingSubmissions = new Map();
 
 // Known operation names LeetCode has used for code submission.
@@ -96,7 +68,7 @@ async function injectContentScript(tabId, action) {
         await new Promise((resolve, reject) => {
             chrome.scripting.executeScript({
                 target: { tabId },
-                files: ['contentScript.js']
+                files: ['scripts/gta-content.js']
             }, () => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);

@@ -14,9 +14,9 @@ export default class GitHubAuthService {
    * @param {Object} [options.env] OAuth configuration.
    * @param {BackendAuthService} [options.backendAuthService] Backend exchange service.
    */
-  constructor({ env = ENV, backendAuthService = new BackendAuthService() } = {}) {
+  constructor({ env = ENV, backendAuthService } = {}) {
     this.env = env;
-    this.backendAuthService = backendAuthService;
+    this.backendAuthService = backendAuthService || new BackendAuthService({ authUrl: env.BACKEND_AUTH_URL });
     this.oauthTransaction = null;
   }
 
@@ -28,11 +28,14 @@ export default class GitHubAuthService {
   async authenticate() {
     this.validateConfiguration();
 
+    console.debug("[OAuth] Before OAuth");
     const transaction = await this.createOAuthTransaction();
 
     try {
       const authorizationUrl = this.buildAuthorizationUrl(transaction);
       const callbackUrl = await this.openAuthorizationFlow(authorizationUrl);
+      
+      console.debug("[OAuth] After redirect");
       const { code, returnedState } = this.parseCallbackUrl(callbackUrl);
 
       if (returnedState !== transaction.state) {

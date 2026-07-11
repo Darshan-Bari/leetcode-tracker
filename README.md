@@ -68,17 +68,67 @@ export const ENV = {
 
 ### Backend Setup
 
-<p>The extension now sends the GitHub authorization code to your backend instead of exchanging it itself. The backend owns the GitHub Client Secret and exposes <code>POST /auth/github</code>.</p>
+<p>The extension sends the GitHub authorization code to the backend instead of exchanging it in the browser. The backend owns the GitHub Client Secret, validates the OAuth request, and exposes <code>POST /auth/github</code>, <code>GET /</code>, and <code>GET /health</code>.</p>
+
+<h3>Local backend setup</h3>
 
 <ol>
   <li>Open the included <code>backend/</code> folder.</li>
   <li>Install dependencies with <code>pip install -r requirements.txt</code>.</li>
   <li>Create <code>backend/.env</code> from <code>backend/.env.example</code>.</li>
-  <li>Set <code>GITHUB_CLIENT_ID</code>, <code>GITHUB_CLIENT_SECRET</code>, and <code>GITHUB_REDIRECT_URI</code> in <code>backend/.env</code> or your host environment.</li>
+  <li>Set <code>GITHUB_CLIENT_ID</code>, <code>GITHUB_CLIENT_SECRET</code>, and <code>GITHUB_REDIRECT_URI</code> as environment variables.</li>
   <li>Start the backend with <code>uvicorn main:app --reload --port 8000</code>.</li>
 </ol>
 
-<p>The extension's backend exchange URL is configured in <code>background.js</code> through <code>BACKEND_AUTH_URL</code>. Point that constant at your deployed backend before packaging the add-on.</p>
+<h3>Render deployment</h3>
+
+<p>Render works with the FastAPI app in <code>backend/main.py</code> without any architectural changes.</p>
+
+<ol>
+  <li>Create a new Render Web Service from this repository.</li>
+  <li>Set <strong>Root Directory</strong> to <code>backend</code>.</li>
+  <li>Set <strong>Build Command</strong> to <code>pip install -r requirements.txt</code>.</li>
+  <li>Set <strong>Start Command</strong> to <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code>.</li>
+  <li>Add the required environment variables in the Render dashboard.</li>
+  <li>Deploy and verify <code>/</code> and <code>/health</code>.</li>
+</ol>
+
+<h3>Environment variables</h3>
+
+<p>The backend reads configuration only from environment variables. Do not hardcode secrets anywhere in the extension or backend source.</p>
+
+<ul>
+  <li><code>GITHUB_CLIENT_ID</code>: the GitHub OAuth App client ID.</li>
+  <li><code>GITHUB_CLIENT_SECRET</code>: the GitHub OAuth App client secret. Keep this only on the backend.</li>
+  <li><code>GITHUB_REDIRECT_URI</code>: the exact redirect URI returned by <code>browser.identity.getRedirectURL("github")</code>.</li>
+</ul>
+
+<p>The backend sample file <code>backend/.env.example</code> documents the same variables. Use Render environment variables for production.</p>
+
+<h3>Callback URL</h3>
+
+<p>Configure the GitHub OAuth App callback URL with the exact value returned by <code>browser.identity.getRedirectURL("github")</code>. That value must also be placed into <code>GITHUB_REDIRECT_URI</code> on the backend.</p>
+
+<p>The extension must point <code>BACKEND_AUTH_URL</code> at the deployed Render endpoint in <code>background.js</code>. Keep the path set to <code>/auth/github</code>.</p>
+
+<h3>Deployment verification</h3>
+
+<ol>
+  <li>Open <code>https://your-render-service.onrender.com/</code> and confirm the JSON response includes <code>service</code>, <code>version</code>, and <code>status: running</code>.</li>
+  <li>Open <code>https://your-render-service.onrender.com/health</code> and confirm <code>status: ok</code> and <code>github_configured: true</code>.</li>
+  <li>Start the Firefox extension and test GitHub login.</li>
+  <li>Confirm the extension receives an access token and can continue syncing submissions.</li>
+</ol>
+
+<h3>OAuth troubleshooting</h3>
+
+<ul>
+  <li>If login fails immediately, verify <code>BACKEND_AUTH_URL</code> points to the Render service and not <code>localhost</code>.</li>
+  <li>If the backend returns <code>invalid_redirect_uri</code>, check that the GitHub OAuth callback URL exactly matches <code>browser.identity.getRedirectURL("github")</code>.</li>
+  <li>If the backend returns <code>client_id_mismatch</code>, confirm the extension client ID and backend environment variable use the same GitHub OAuth App.</li>
+  <li>If GitHub returns <code>invalid_oauth_code</code> or <code>expired_oauth_code</code>, restart the login flow and generate a new authorization code.</li>
+  <li>If Render reports startup issues, verify the environment variables are present and the start command uses <code>$PORT</code>.</li>
+</ul>
 
 ### GitHub OAuth callback URL
 
@@ -112,11 +162,13 @@ export const ENV = {
 
 ### Deploying the backend
 
-<p>Render and Railway both work with the same FastAPI app. Set the environment variables in the hosting dashboard, then start the service with <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code> or the platform's equivalent start command.</p>
+<p>Render is the recommended production host for the backend. The service is designed to run as a standard Python Web Service with no custom build tooling.</p>
 
 <ul>
-  <li>Render: point the build step at <code>backend/</code>, install <code>requirements.txt</code>, and use <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code>.</li>
-  <li>Railway: set the same environment variables and run <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code>.</li>
+  <li>Root Directory: <code>backend</code></li>
+  <li>Build Command: <code>pip install -r requirements.txt</code></li>
+  <li>Start Command: <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code></li>
+  <li>Environment Variables: <code>GITHUB_CLIENT_ID</code>, <code>GITHUB_CLIENT_SECRET</code>, <code>GITHUB_REDIRECT_URI</code></li>
 </ul>
 
 ### Security best practices
@@ -126,6 +178,25 @@ export const ENV = {
   <li>Use HTTPS for the backend in production.</li>
   <li>Rotate the GitHub OAuth App secret if it is ever exposed.</li>
   <li>Keep the extension limited to <code>CLIENT_ID</code>, the redirect URL, and the requested scopes.</li>
+  <li>Do not deploy localhost URLs to Render.</li>
+  <li>Verify the backend logs never include the client secret, access token, authorization code, or PKCE verifier.</li>
+</ul>
+
+### Deployment checklist
+
+<ul>
+  <li>✅ Push the repository to GitHub.</li>
+  <li>✅ Create a Render Web Service.</li>
+  <li>✅ Set Root Directory to <code>backend</code>.</li>
+  <li>✅ Set Build Command to <code>pip install -r requirements.txt</code>.</li>
+  <li>✅ Set Start Command to <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code>.</li>
+  <li>✅ Add <code>GITHUB_CLIENT_ID</code>.</li>
+  <li>✅ Add <code>GITHUB_CLIENT_SECRET</code>.</li>
+  <li>✅ Add <code>GITHUB_REDIRECT_URI</code>.</li>
+  <li>✅ Verify <code>/</code>.</li>
+  <li>✅ Verify <code>/health</code>.</li>
+  <li>✅ Update <code>BACKEND_AUTH_URL</code> in the extension to the Render URL.</li>
+  <li>✅ Test GitHub login in Firefox.</li>
 </ul>
 
 ### Building for Firefox Add-ons (AMO) Publishing

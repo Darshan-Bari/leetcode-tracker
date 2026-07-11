@@ -1,5 +1,3 @@
-const DEFAULT_BACKEND_AUTH_URL = "https://your-backend/auth/github";
-
 /**
  * Handles the backend-side OAuth exchange.
  * The extension sends the GitHub authorization code here; the backend owns the
@@ -8,12 +6,13 @@ const DEFAULT_BACKEND_AUTH_URL = "https://your-backend/auth/github";
 export default class BackendAuthService {
   /**
    * @param {Object} [options]
-   * @param {string} [options.authUrl] Backend endpoint used to exchange the code.
-   * @param {Function} [options.fetchImpl] Fetch implementation for testability.
+   * @param {string} options.authUrl Backend endpoint used to exchange the code.
    */
-  constructor({ authUrl = DEFAULT_BACKEND_AUTH_URL, fetchImpl = fetch } = {}) {
+  constructor({ authUrl }) {
+    if (!authUrl) {
+      throw new Error("Missing authUrl in BackendAuthService.");
+    }
     this.authUrl = authUrl;
-    this.fetchImpl = fetchImpl;
   }
 
   /**
@@ -24,17 +23,20 @@ export default class BackendAuthService {
    * @param {string} params.state Random state value used to protect the flow.
    * @param {string} params.redirectUri Redirect URI used in the authorization request.
    * @param {string} params.clientId GitHub OAuth client ID.
-    * @param {string} params.codeVerifier PKCE verifier generated for the flow.
+   * @param {string} params.codeVerifier PKCE verifier generated for the flow.
    * @returns {Promise<Object>} Backend response payload.
    */
-    async exchangeCode({ code, state, redirectUri, clientId, codeVerifier }) {
+  async exchangeCode({ code, state, redirectUri, clientId, codeVerifier }) {
     if (!code) {
       throw new Error("Missing GitHub OAuth code.");
     }
 
+    console.debug("[OAuth] Before backend request");
+    console.debug("[OAuth] Backend URL:", this.authUrl);
+
     let response;
     try {
-      response = await this.fetchImpl(this.authUrl, {
+      response = await fetch(this.authUrl, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -49,12 +51,22 @@ export default class BackendAuthService {
         }),
       });
     } catch (error) {
+      console.debug("[OAuth] Network error:", error.message);
       throw new Error(
         `Unable to contact the backend OAuth service: ${error.message}`
       );
     }
 
     const payload = await response.json().catch(() => ({}));
+
+    console.debug("[OAuth] Response status:", response.status);
+    
+    const safePayload = { ...payload };
+    delete safePayload.access_token;
+    delete safePayload.accessToken;
+    delete safePayload.token;
+    delete safePayload.refresh_token;
+    console.debug("[OAuth] Response body:", safePayload);
 
     if (!response.ok) {
       throw new Error(

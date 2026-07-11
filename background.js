@@ -4,8 +4,6 @@ import SyncService from "./scripts/services/sync-service.js";
 import GitHubAuthService from "./scripts/services/github-auth-service.js";
 import BackendAuthService from "./scripts/services/backend-auth-service.js";
 
-const BACKEND_AUTH_URL = "https://your-backend/auth/github";
-
 const GITHUB_API_CONFIG = {
   REPOSITORY_URL: "https://api.github.com/repos/",
   USER_INFO_URL: "https://api.github.com/user",
@@ -226,7 +224,7 @@ class LeetCodeTrackerController {
     this.syncService = new SyncService();
     this.githubAuthService = new GitHubAuthService({
       env: ENV,
-      backendAuthService: new BackendAuthService({ authUrl: BACKEND_AUTH_URL }),
+      backendAuthService: new BackendAuthService({ authUrl: ENV.BACKEND_AUTH_URL }),
     });
 
     // Store environment configuration for other components

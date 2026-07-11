@@ -28,7 +28,7 @@
     "storage",
     "identity",
     "tabs",
-    "webRequest", 
+    "webRequest",
     "scripting",
     "activeTab",
     "cookies"
@@ -37,8 +37,7 @@
     "https://leetcode.com/*",
     "https://api.github.com/*",
     "https://github.com/*",
-    "http://127.0.0.1:8000/*",
-    "http://localhost:8000/*"
+    "https://leetcode-tracker-api-0qkb.onrender.com/*"
   ],
   "content_scripts": [
     {
@@ -75,10 +74,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "leetcode-tracker@darshanbari.dev",
-      "strict_min_version": "140.0",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
+      "strict_min_version": "140.0"
     }
   }
 }
