@@ -19,8 +19,7 @@
   },
   "background": {
     "scripts": [
-      "background.js",
-      "scripts/gta-background.js"
+      "background.js"
     ],
     "type": "module"
   },
@@ -29,6 +28,7 @@
     "identity",
     "tabs",
     "webRequest",
+    "webRequestBlocking",
     "scripting",
     "activeTab",
     "cookies"

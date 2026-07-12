@@ -159,7 +159,7 @@ function show(action, delay = delays[action] ?? 1000) {
     
     video.src = videoSrc;
     video.autoplay = true;
-    video.muted = false;
+    video.muted = true;
     video.loop = false;
     video.style.width = '100%';
     video.style.height = '100%';

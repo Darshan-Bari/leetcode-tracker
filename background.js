@@ -3,6 +3,7 @@ import LeetCodeService from "./scripts/services/leetcode-service.js";
 import SyncService from "./scripts/services/sync-service.js";
 import GitHubAuthService from "./scripts/services/github-auth-service.js";
 import BackendAuthService from "./scripts/services/backend-auth-service.js";
+import "./scripts/gta-background.js";
 
 const GITHUB_API_CONFIG = {
   REPOSITORY_URL: "https://api.github.com/repos/",
