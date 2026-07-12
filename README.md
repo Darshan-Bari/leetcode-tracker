@@ -14,6 +14,8 @@
 
 <p>A browser extension that automatically pushes your code to GitHub when you pass all tests on a <a href="http://leetcode.com/problems/">LeetCode problem</a>.</p>
 
+<p><strong>🔥 NEW: GTA Theme Integration!</strong> Celebrate your coding victories (and defeats) with style. The extension now features classic Grand Theft Auto "Mission Passed" and "Wasted" overlays and sound effects whenever you submit your LeetCode solutions!</p>
+
 ## Why LeetCode Tracker?
 
 <p> <strong>1.</strong> Recruiters <em>want</em> to see your contributions to the Open Source community, be it through side projects, solving algorithms/data-structures, or contributing to existing OS projects.<br>
