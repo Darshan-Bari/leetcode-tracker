@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/gta-leetcode-banner.png" alt="LeetCode Tracker GTA Banner" width="100%" />
+  <img src="assets/gta-leetcode-banner.png" alt="LeetCode Tracker GTA Banner" width="650" />
 </p>
 
 <h1 align="center">🎮 LeetCode Tracker 🚗💥</h1>
@@ -20,10 +20,6 @@
 ## 🌟 The GTA V Overlay Experience
 
 Transform standard LeetCode problem solving into high-stakes gaming missions! Whenever you submit code, **LeetCode Tracker** triggers real-time, authentic GTA V overlay animations and audio effects directly inside your browser tab:
-
-<p align="center">
-  <img src="assets/gta-overlays-showcase.png" alt="GTA Mission Passed and Wasted Overlays Showcase" width="95%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);" />
-</p>
 
 <table align="center">
   <tr>
