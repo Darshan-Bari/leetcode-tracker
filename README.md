@@ -2,7 +2,7 @@
   <img src="assets/gta-leetcode-banner.png" alt="LeetCode Tracker GTA Banner" width="650" />
 </p>
 
-<h1 align="center">🎮 LeetCode Tracker 🚗💥</h1>
+<h1 align="center">🎮 LeetCode Tracker 💥</h1>
 
 <p align="center">
   <b>Level up your algorithm game with iconic GTA V style overlays & seamless GitHub sync!</b>
