@@ -1,12 +1,46 @@
-# LeetCode Tracker
-
 <p align="center">
-  <img src="assets/logo-leetcode-tracker/Leetcode-tracker-500.png" alt="LeetCode Tracker logo" width="180" />
+  <img src="assets/gta-leetcode-banner.png" alt="LeetCode Tracker GTA Banner" width="100%" />
 </p>
 
-Firefox extension that syncs accepted LeetCode solutions to an existing GitHub repository.
+<h1 align="center">🎮 LeetCode Tracker 🚗💥</h1>
 
-> **Status:** Firefox only · Manifest V3 · Firefox 140+
+<p align="center">
+  <b>Level up your algorithm game with iconic GTA V style overlays & seamless GitHub sync!</b>
+</p>
+
+<p align="center">
+  <a href="#-the-gta-v-overlay-experience"><img src="https://img.shields.io/badge/Theme-GTA%20V%20Style-4CAF50?style=for-the-badge&logo=gamepad&logoColor=white" alt="GTA V Theme" /></a>
+  <a href="https://github.com"><img src="https://img.shields.io/badge/Sync-GitHub%20OAuth-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Sync" /></a>
+  <a href="https://www.mozilla.org/firefox"><img src="https://img.shields.io/badge/Firefox-Manifest%20V3-FF7139?style=for-the-badge&logo=firefox-browser&logoColor=white" alt="Firefox Extension" /></a>
+  <a href="#features"><img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status" /></a>
+</p>
+
+---
+
+## 🌟 The GTA V Overlay Experience
+
+Transform standard LeetCode problem solving into high-stakes gaming missions! Whenever you submit code, **LeetCode Tracker** triggers real-time, authentic GTA V overlay animations and audio effects directly inside your browser tab:
+
+<p align="center">
+  <img src="assets/gta-overlays-showcase.png" alt="GTA Mission Passed and Wasted Overlays Showcase" width="95%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);" />
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <h3>🟩 MISSION PASSED</h3>
+      <p><b>RESPECT +1000</b></p>
+      <p>Triggered automatically on <code>Accepted</code> submissions. Plays the legendary GTA victory theme with green overlays as your solution is committed to GitHub!</p>
+    </td>
+    <td align="center" width="50%">
+      <h3>🟥 WASTED</h3>
+      <p><b>MISSION FAILED</b></p>
+      <p>Triggered on <code>Wrong Answer</code>, <code>Time Limit Exceeded</code>, or <code>Runtime Error</code> with the iconic GTA dark vignette & sound effect!</p>
+    </td>
+  </tr>
+</table>
+
+---
 
 ## Features
 
