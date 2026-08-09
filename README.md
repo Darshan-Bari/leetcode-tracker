@@ -9,10 +9,18 @@
 </p>
 
 <p align="center">
-  <a href="#-the-gta-v-overlay-experience"><img src="https://img.shields.io/badge/Theme-GTA%20V%20Style-4CAF50?style=for-the-badge&logo=gamepad&logoColor=white" alt="GTA V Theme" /></a>
-  <a href="https://github.com"><img src="https://img.shields.io/badge/Sync-GitHub%20OAuth-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Sync" /></a>
-  <a href="https://www.mozilla.org/firefox"><img src="https://img.shields.io/badge/Firefox-Manifest%20V3-FF7139?style=for-the-badge&logo=firefox-browser&logoColor=white" alt="Firefox Extension" /></a>
-  <a href="#features"><img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status" /></a>
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/leetcode-to-github/">
+    <img src="https://img.shields.io/badge/Get_it_for-Firefox_Add--on-FF7139?style=for-the-badge&logo=firefox-browser&logoColor=white" alt="Get Firefox Add-on" />
+  </a>
+  <a href="#-the-gta-v-overlay-experience">
+    <img src="https://img.shields.io/badge/Theme-GTA%20V%20Style-4CAF50?style=for-the-badge&logo=gamepad&logoColor=white" alt="GTA V Theme" />
+  </a>
+  <a href="https://github.com">
+    <img src="https://img.shields.io/badge/Sync-GitHub%20OAuth-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Sync" />
+  </a>
+  <a href="#features">
+    <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status" />
+  </a>
 </p>
 
 ---
