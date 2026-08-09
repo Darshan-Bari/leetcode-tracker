@@ -10,6 +10,7 @@ const DOM = {
   repoName: document.getElementById("repo-name"),
   subfolderPath: document.getElementById("subfolder-path"),
   repoNameError: document.getElementById("repo-name-error"),
+  repoForm: document.getElementById("repo-form"),
   hookButton: document.getElementById("hook-button"),
   unlinkButton: document.getElementById("unlink-button"),
   repositoryName: document.getElementById("repository-name"),
@@ -27,11 +28,6 @@ const DOM = {
   syncButton: document.getElementById("sync-button"),
   syncStatus: document.getElementById("sync-status"),
   syncTime: document.getElementById("sync-time"),
-  stats: {
-    easy: document.getElementById("easy"),
-    medium: document.getElementById("medium"),
-    hard: document.getElementById("hard"),
-  },
 };
 
 /**
@@ -41,11 +37,9 @@ const DOM = {
 class PopupManager {
   /**
    * Initialize the popup manager with all required components.
-   * Sets up statistics display, event listeners, settings synchronization,
-   * and starts background sync status monitoring.
+   * Sets up event listeners, settings synchronization, and background sync status monitoring.
    */
   constructor() {
-    this.initializeStats();
     this.initializeEventListeners();
     this.initializeSetting();
 
@@ -178,7 +172,10 @@ class PopupManager {
       "click",
       this.handleAuthentication.bind(this)
     );
-    DOM.hookButton.addEventListener("click", this.handleHookRepo.bind(this));
+    DOM.repoForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.handleHookRepo();
+    });
     DOM.unlinkButton.addEventListener("click", this.unlinkRepo.bind(this));
     DOM.logoutButton.addEventListener("click", this.logout.bind(this));
     DOM.changeAccountButton.addEventListener("click", this.logout.bind(this));
@@ -195,13 +192,18 @@ class PopupManager {
       this.toggleCommentSubmissionSetting.bind(this)
     );
     DOM.syncButton.addEventListener("click", this.startManualSync.bind(this));
+  }
 
-    // Listen for statistics updates from background script
-    browser.runtime.onMessage.addListener((message) => {
-      if (message.type === "statsUpdate") {
-        this.updateStatsDisplay(message.data);
-      }
-    });
+  /**
+   * Update the sync button without replacing its trusted DOM structure.
+   *
+   * @param {boolean} inProgress Whether synchronization is active.
+   */
+  setSyncButtonState(inProgress) {
+    DOM.syncButton.disabled = inProgress;
+    DOM.syncButton.querySelector("svg")?.classList.toggle("spin", inProgress);
+    const label = DOM.syncButton.querySelector("span");
+    if (label) label.textContent = inProgress ? "Syncing..." : "Sync";
   }
 
   /**
@@ -215,27 +217,21 @@ class PopupManager {
    * 4. Send sync message to background script
    * 5. Update sync status display
    */
-  startManualSync() {
-    DOM.syncButton.disabled = true;
-    DOM.syncButton.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="spin" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg><span style="margin-left: 5px">Syncing...</span>';
+  async startManualSync() {
+    this.setSyncButtonState(true);
+    DOM.syncStatus.className = "";
+    DOM.syncStatus.textContent = "Starting synchronization...";
 
-    // Inject CSS animation for loading spinner
-    const style = document.createElement("style");
-    style.textContent = `
-  .spin {
-    animation: spin 1.5s linear infinite;
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-    document.head.appendChild(style);
-
-    browser.runtime.sendMessage({ type: "syncSolvedProblems" });
-
-    this.updateSyncStatus();
+    try {
+      await browser.runtime.sendMessage({ type: "syncSolvedProblems" });
+      window.setTimeout(() => this.updateSyncStatus(), 250);
+    } catch (error) {
+      this.setSyncButtonState(false);
+      DOM.syncStatus.className = "text-danger";
+      DOM.syncStatus.textContent = `Unable to start sync: ${
+        error.message || "Background service unavailable"
+      }`;
+    }
   }
 
   /**
@@ -258,50 +254,53 @@ class PopupManager {
         "leetcode_tracker_last_sync_date",
       ]);
 
-      const inProgress = result.leetcode_tracker_sync_in_progress || false;
+      const inProgress = Boolean(result.leetcode_tracker_sync_in_progress);
       const lastStatus = result.leetcode_tracker_last_sync_status || "";
       const lastMessage = result.leetcode_tracker_last_sync_message || "";
-      const lastDate = result.leetcode_tracker_last_sync_date
+      const parsedDate = result.leetcode_tracker_last_sync_date
         ? new Date(result.leetcode_tracker_last_sync_date)
         : null;
+      const lastDate =
+        parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : null;
+
+      DOM.syncStatus.className = "";
+      DOM.syncTime.className = "";
 
       if (inProgress) {
-        DOM.syncButton.disabled = true;
-        DOM.syncButton.innerHTML =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="spin" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg><span style="margin-left: 5px">Syncing...</span>';
-        DOM.syncStatus.textContent = "Synchronization in progress...";
+        this.setSyncButtonState(true);
+        DOM.syncStatus.textContent = lastMessage || "Synchronization in progress...";
       } else {
-        DOM.syncButton.disabled = false;
-        DOM.syncButton.innerHTML =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg><span style="margin-left: 5px">Sync</span>';
+        this.setSyncButtonState(false);
 
-        // Update status message based on last sync result
         if (lastStatus === "success") {
-          DOM.syncStatus.textContent = "Last sync: Successful";
+          DOM.syncStatus.textContent = lastMessage || "Last sync completed successfully";
           DOM.syncStatus.className = "text-success";
-        } else if (lastStatus === "failed") {
-          DOM.syncStatus.textContent = "Last sync: Failed";
+        } else if (lastStatus === "partial") {
+          DOM.syncStatus.textContent = lastMessage || "Last sync completed with some failures";
           DOM.syncStatus.className = "text-danger";
-
-          if (lastMessage) {
-            DOM.syncStatus.textContent = `Last sync: Failed - ${lastMessage}`;
-          }
-        } else if (!lastStatus) {
+        } else if (lastStatus === "failed") {
+          DOM.syncStatus.textContent = lastMessage
+            ? `Last sync failed: ${lastMessage}`
+            : "Last sync failed";
+          DOM.syncStatus.className = "text-danger";
+        } else {
           DOM.syncStatus.textContent = "No synchronization performed yet";
           DOM.syncStatus.className = "text-muted";
         }
       }
 
-      // Display formatted timestamp
       if (lastDate) {
-        const formattedDate = this.formatDate(lastDate);
-        DOM.syncTime.textContent = `${formattedDate}`;
+        DOM.syncTime.textContent = this.formatDate(lastDate);
         DOM.syncTime.className = "text-muted";
       } else {
         DOM.syncTime.textContent = "";
       }
     } catch (error) {
-      // Handle errors silently to prevent popup disruption
+      DOM.syncButton.disabled = false;
+      DOM.syncStatus.textContent = "Sync status is temporarily unavailable";
+      DOM.syncStatus.className = "text-muted";
+      DOM.syncTime.textContent = "";
+      DOM.syncTime.className = "";
     }
   }
 
@@ -337,8 +336,11 @@ class PopupManager {
    * Prevents navigation away from the popup interface.
    */
   setupLinks() {
-    document.querySelectorAll("a.link").forEach((link) => {
-      link.onclick = () => browser.tabs.create({ active: true, url: link.href });
+    document.querySelectorAll("a.link, #repository-link").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        browser.tabs.create({ active: true, url: link.href });
+      });
     });
   }
 
@@ -359,15 +361,19 @@ class PopupManager {
       "leetcode_tracker_repo",
     ]);
 
+    [DOM.authenticate, DOM.hookRepo, DOM.authenticated].forEach((panel) => {
+      panel.style.display = "none";
+    });
+
     if (!result.leetcode_tracker_token || !result.leetcode_tracker_username) {
       DOM.authenticate.style.display = "block";
     } else if (!result.leetcode_tracker_repo || !result.leetcode_tracker_mode) {
       DOM.hookRepo.style.display = "block";
     } else {
-      DOM.authenticated.style.display = "block";
+      DOM.authenticated.style.display = "flex";
     }
 
-    this.updateUserInfos();
+    await this.updateUserInfos();
   }
 
   /**
@@ -391,12 +397,18 @@ class PopupManager {
    * Constructs the repository link for easy access to the GitHub repository.
    */
   async updateUserInfos() {
-    const { leetcode_tracker_repo, leetcode_tracker_username, leetcode_tracker_subfolder } =
-      await browser.storage.local.get([
-        "leetcode_tracker_repo",
-        "leetcode_tracker_username",
-        "leetcode_tracker_subfolder",
-      ]);
+    const {
+      leetcode_tracker_repo,
+      leetcode_tracker_username,
+      leetcode_tracker_subfolder,
+      leetcode_tracker_default_branch,
+    } = await browser.storage.local.get([
+      "leetcode_tracker_repo",
+      "leetcode_tracker_username",
+      "leetcode_tracker_subfolder",
+      "leetcode_tracker_default_branch",
+    ]);
+
     if (leetcode_tracker_repo) {
       DOM.repositoryName.textContent = leetcode_tracker_subfolder
         ? `${leetcode_tracker_repo} / ${leetcode_tracker_subfolder}`
@@ -406,74 +418,21 @@ class PopupManager {
       DOM.githubUsername.textContent = leetcode_tracker_username;
     }
     if (leetcode_tracker_username && leetcode_tracker_repo) {
-      const subfolderSegment = leetcode_tracker_subfolder
-        ? `/tree/main/${leetcode_tracker_subfolder}`
+      const encodedSubfolder = (leetcode_tracker_subfolder || "")
+        .split("/")
+        .filter(Boolean)
+        .map(encodeURIComponent)
+        .join("/");
+      const branch = encodeURIComponent(
+        leetcode_tracker_default_branch || "main"
+      );
+      const subfolderSegment = encodedSubfolder
+        ? `/tree/${branch}/${encodedSubfolder}`
         : "";
-      DOM.repositoryLink.href = `https://github.com/${leetcode_tracker_username}/${leetcode_tracker_repo}${subfolderSegment}`;
+      DOM.repositoryLink.href = `https://github.com/${encodeURIComponent(
+        leetcode_tracker_username
+      )}/${encodeURIComponent(leetcode_tracker_repo)}${subfolderSegment}`;
     }
-  }
-
-  /**
-   * Initialize the statistics display by requesting current data from background script.
-   * Shows loading state while fetching and updates display when data arrives.
-   */
-  async initializeStats() {
-    try {
-      this.startLoading();
-
-      const initialStats = await this.getInitialStats();
-      if (initialStats) {
-        this.updateStatsDisplay(initialStats);
-      }
-    } catch (error) {
-      // Handle stats loading errors gracefully
-    }
-  }
-
-  /**
-   * Request initial statistics data from the background script.
-   * Uses browser messaging API to communicate with background processes.
-   *
-   * @returns {Promise<Object>} Promise resolving to statistics object
-   */
-  getInitialStats() {
-    return browser.runtime.sendMessage({ type: "requestInitialStats" });
-  }
-
-  /**
-   * Update the statistics display with new data from background script.
-   * Handles both initial load and real-time updates during synchronization.
-   *
-   * @param {Object} stats - Statistics object with easy, medium, hard counts
-   */
-  updateStatsDisplay(stats) {
-    if (!stats) return;
-
-    this.stopLoading();
-
-    Object.keys(DOM.stats).forEach((key) => {
-      if (DOM.stats[key]) {
-        DOM.stats[key].textContent = stats[key] || 0;
-      }
-    });
-  }
-
-  /**
-   * Show loading animation for statistics section.
-   * Provides visual feedback during data fetching.
-   */
-  startLoading() {
-    document.getElementById("loading-container").style.display = "flex";
-    document.getElementById("stats").classList.add("loading");
-  }
-
-  /**
-   * Hide loading animation and show statistics content.
-   * Called when data loading completes successfully.
-   */
-  stopLoading() {
-    document.getElementById("loading-container").style.display = "none";
-    document.getElementById("stats").classList.remove("loading");
   }
 
   /**
@@ -481,6 +440,11 @@ class PopupManager {
    * Delegates the complete flow to the background script.
    */
   async handleAuthentication() {
+    const label = DOM.authenticateButton.querySelector("span");
+    const originalText = label?.textContent || "Authenticate";
+    DOM.authenticateButton.disabled = true;
+    if (label) label.textContent = "Connecting...";
+
     try {
       const response = await browser.runtime.sendMessage({
         type: "startGitHubAuthentication",
@@ -497,6 +461,9 @@ class PopupManager {
       alert(
         `Authentication failed: ${error.message || "Could not connect to background service."}`
       );
+    } finally {
+      DOM.authenticateButton.disabled = false;
+      if (label) label.textContent = originalText;
     }
   }
 
@@ -505,11 +472,14 @@ class PopupManager {
    * Validates user input and attempts to link the specified repository.
    */
   async handleHookRepo() {
-    const repositoryName = DOM.repoName.value;
+    const repositoryName = DOM.repoName.value.trim();
+    const label = DOM.hookButton.querySelector("span");
+    const originalText = label?.textContent || "Link repository";
     DOM.repoNameError.textContent = "";
 
     if (!repositoryName) {
       DOM.repoNameError.textContent = "Please enter a repository name";
+      DOM.repoName.focus();
       return;
     }
 
@@ -518,18 +488,22 @@ class PopupManager {
     subfolderPath = subfolderPath.replace(/^\/+|\/+$/g, "");
     subfolderPath = subfolderPath.replace(/\/\/+/g, "/");
 
+    DOM.hookButton.disabled = true;
+    if (label) label.textContent = "Linking...";
+
     try {
       const result = await browser.storage.local.get([
         "leetcode_tracker_token",
         "leetcode_tracker_username",
       ]);
 
-      if (result) {
-        await this.linkRepo(result, repositoryName, subfolderPath);
-      }
+      await this.linkRepo(result, repositoryName, subfolderPath);
     } catch (error) {
       DOM.repoNameError.textContent =
-        "An error occurred while linking the repository";
+        error.message || "An error occurred while linking the repository";
+    } finally {
+      DOM.hookButton.disabled = false;
+      if (label) label.textContent = originalText;
     }
   }
 
@@ -581,12 +555,23 @@ class PopupManager {
         leetcode_tracker_mode: "commit",
         leetcode_tracker_repo: repositoryName,
         leetcode_tracker_subfolder: subfolderPath,
+        leetcode_tracker_default_branch: result.default_branch || "main",
       });
 
+      await this.updateUserInfos();
       DOM.hookRepo.style.display = "none";
-      DOM.authenticated.style.display = "block";
+      DOM.authenticated.style.display = "flex";
     } catch (error) {
-      DOM.repoNameError.textContent = error.message;
+      const message = error?.message || "";
+      if (
+        error instanceof TypeError ||
+        /NetworkError|Failed to fetch/i.test(message)
+      ) {
+        throw new Error(
+          "GitHub is unreachable. Check your connection, then reload the extension and try linking again."
+        );
+      }
+      throw error;
     }
   }
 
@@ -600,6 +585,7 @@ class PopupManager {
         "leetcode_tracker_mode",
         "leetcode_tracker_repo",
         "leetcode_tracker_subfolder",
+        "leetcode_tracker_default_branch",
       ]);
       DOM.authenticated.style.display = "none";
       DOM.hookRepo.style.display = "block";

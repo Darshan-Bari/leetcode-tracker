@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">LeetCode Tracker</title>
+  <desc id="desc">LeetCode and GitHub marks surrounded by orange and white sync arrows</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#202125"/><stop offset="1" stop-color="#08090b"/></linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffc52a"/><stop offset=".55" stop-color="#ff9f0a"/><stop offset="1" stop-color="#f27a00"/></linearGradient>
+    <linearGradient id="white" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".65" stop-color="#f4f4f4"/><stop offset="1" stop-color="#c8c8c8"/></linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eee"/><stop offset="1" stop-color="#aaa"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#000" flood-opacity=".65"/></filter>
+    <filter id="soft" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="9" stdDeviation="8" flood-color="#000" flood-opacity=".75"/></filter>
+  </defs>
+  <rect width="1024" height="1024" rx="215" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <path d="M151 515A372 372 0 0 1 675 184" fill="none" stroke="url(#orange)" stroke-width="94" stroke-linecap="round"/>
+    <path d="M650 119Q667 89 684 122L780 239Q799 269 764 273L626 278Q593 280 608 250Z" fill="url(#orange)"/>
+    <path d="M862 612A378 378 0 0 1 224 682" fill="none" stroke="url(#white)" stroke-width="92" stroke-linecap="round"/>
+    <path d="M143 574Q128 561 128 586L133 711Q134 743 159 721L205 686L250 645Q275 625 244 611Z" fill="url(#white)"/>
+  </g>
+  <g filter="url(#soft)">
+    <path d="M554 419L470 505" fill="none" stroke="url(#orange)" stroke-width="70" stroke-linecap="round"/>
+    <path d="M570 622L477 708" fill="none" stroke="url(#orange)" stroke-width="70" stroke-linecap="round"/>
+    <path d="M510 302L342 471Q303 511 339 559L444 676" fill="none" stroke="url(#white)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M467 536H617" fill="none" stroke="url(#silver)" stroke-width="58" stroke-linecap="round"/>
+  </g>
+  <g filter="url(#shadow)">
+    <circle cx="790" cy="442" r="156" fill="url(#white)"/>
+    <g transform="translate(674 328) scale(2.36)"><path d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0Z" fill="#090a0c"/></g>
+  </g>
+</svg>

@@ -27,6 +27,7 @@ export default class GitHubAuthService {
    */
   async authenticate() {
     this.validateConfiguration();
+    await this.backendAuthService.ensureAvailable();
 
     console.debug("[OAuth] Before OAuth");
     const transaction = await this.createOAuthTransaction();
@@ -82,12 +83,12 @@ export default class GitHubAuthService {
 
     if (isPlaceholderValue(this.env.CLIENT_ID)) {
       throw new Error(
-        "GitHub OAuth is not configured. Set CLIENT_ID in environment.js and configure the backend OAuth app."
+        "This extension build is missing its publisher OAuth configuration. Users should not create their own OAuth App; reinstall the latest official release."
       );
     }
 
-    if (!this.env.AUTH_URL || !this.env.REDIRECT_URL) {
-      throw new Error("GitHub OAuth endpoints are not configured.");
+    if (!this.env.AUTH_URL || !this.env.BACKEND_AUTH_URL || !this.env.REDIRECT_URL) {
+      throw new Error("This extension build has incomplete OAuth endpoints.");
     }
   }
 
@@ -321,13 +322,20 @@ export default class GitHubAuthService {
    * @returns {Promise<string>} GitHub login name.
    */
   async fetchGitHubUsername(accessToken) {
-    const response = await fetch(GITHUB_USER_INFO_URL, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `token ${accessToken}`,
-      },
-    });
+    let response;
+    try {
+      response = await fetch(GITHUB_USER_INFO_URL, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `token ${accessToken}`,
+        },
+      });
+    } catch (error) {
+      throw new Error(
+        "GitHub could not be reached after authentication. Check your connection and try again."
+      );
+    }
 
     const payload = await response.json().catch(() => ({}));
 

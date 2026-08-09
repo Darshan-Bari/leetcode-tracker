@@ -3,7 +3,6 @@ import LanguageUtils from "../utils/language-utils.js";
 export default class Problem {
   constructor() {
     this.slug = "";
-    this.difficulty = "";
     this.description = "";
     this.problemUrl = "";
     this.code = "";
@@ -33,21 +32,103 @@ export default class Problem {
     return "";
   }
 
+  applySubmissionDetails(details = {}) {
+    const languageKey = details.language || details.lang?.name || details.langName;
+    const language = LanguageUtils.getLanguageInfo(languageKey);
+    if (language) this.language = language;
+    if (typeof details.code === "string") this.code = details.code;
+
+    const questionId = String(details.questionId || "").trim();
+    const titleSlug = String(details.titleSlug || "").trim();
+    if (questionId && titleSlug) {
+      const title = titleSlug
+        .split("-")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join("");
+      this.slug = `${questionId}-${title}`;
+      this.problemUrl = `/problems/${titleSlug}/`;
+    }
+  }
+
   extractLanguageFromDOM() {
-    const language =
-      JSON.parse(window.localStorage.getItem("global_lang")) ||
-      document.querySelector("#headlessui-popover-button-\\:r1s\\: button")
-        ?.textContent;
+    let language = "";
+    const storedLanguage = window.localStorage.getItem("global_lang");
+    if (storedLanguage) {
+      try {
+        const parsed = JSON.parse(storedLanguage);
+        language = typeof parsed === "string"
+          ? parsed
+          : parsed?.value || parsed?.langSlug || parsed?.name || "";
+      } catch (_) {
+        language = storedLanguage;
+      }
+    }
+
+    if (!language) {
+      const selectors = [
+        '[data-e2e-locator="console-language-button"]',
+        '[data-cy="lang-select"]',
+        'button[id^="headlessui-popover-button"]',
+      ];
+      for (const selector of selectors) {
+        const text = document.querySelector(selector)?.textContent?.trim();
+        if (LanguageUtils.getLanguageInfo(text)) {
+          language = text;
+          break;
+        }
+      }
+    }
 
     this.language = LanguageUtils.getLanguageInfo(language);
+    if (!this.language) {
+      throw new Error("Unable to determine the submitted language.");
+    }
+    return this.language;
   }
 
   extractCodeFromDOM() {
-    const codeElements = document.querySelectorAll(
-      `code.language-${this.language.langName}`
-    );
+    let code = "";
+    if (this.language?.langName) {
+      const languageElements = document.querySelectorAll(
+        `code.language-${this.language.langName}`
+      );
+      code = languageElements[languageElements.length - 1]?.textContent || "";
+    }
 
-    this.code = codeElements[codeElements.length - 1].textContent;
+    if (!code) {
+      const codeElements = document.querySelectorAll('code[class*="language-"]');
+      code = codeElements[codeElements.length - 1]?.textContent || "";
+    }
+
+    if (!code) {
+      const editorLines = document.querySelectorAll(".monaco-editor .view-lines .view-line");
+      if (editorLines.length) {
+        code = Array.from(editorLines, (line) => line.textContent || "").join("\n");
+      }
+    }
+
+    if (!code) {
+      const textarea = document.querySelector(
+        '[data-e2e-locator="console-code-editor"] textarea, .monaco-editor textarea'
+      );
+      code = textarea?.value || "";
+    }
+
+    this.code = code;
+    if (!this.code.trim()) {
+      throw new Error("Unable to read the accepted solution code.");
+    }
+    return this.code;
+  }
+
+  validateForSubmission() {
+    if (!this.slug) throw new Error("Unable to determine the problem name.");
+    if (!this.language?.extension || !this.language?.langName) {
+      throw new Error("Unable to determine the submitted language.");
+    }
+    if (!this.code?.trim()) throw new Error("Unable to read the accepted solution code.");
+    return true;
   }
 
   extractProblemInfos(url) {
@@ -70,12 +151,11 @@ export default class Problem {
 
       const observer = new MutationObserver((mutations, obs) => {
         // Extract data from the iframe
-        this.extractDifficultyFromDOM(iframeDocument);
         this.extractDescriptionFromDOM(iframeDocument);
         this.extractSlugFromDOM(iframeDocument);
 
-        // If all data is extracted, stop the observer
-        if (this.difficulty && this.description && this.slug) {
+        // If all required data is extracted, stop the observer
+        if (this.description && this.slug) {
           obs.disconnect();
           document.body.removeChild(iframe);
         }
@@ -105,22 +185,6 @@ export default class Problem {
 
     if (problemNameSelector) {
       this.slug = this.formatProblemName(problemNameSelector.textContent);
-    }
-  }
-
-  async extractDifficultyFromDOM(iframeDocument) {
-    const easy = iframeDocument.querySelector("div.text-difficulty-easy");
-    const medium = iframeDocument.querySelector("div.text-difficulty-medium");
-    const hard = iframeDocument.querySelector("div.text-difficulty-hard");
-
-    if (easy) {
-      this.difficulty = "easy";
-    } else if (medium) {
-      this.difficulty = "medium";
-    } else if (hard) {
-      this.difficulty = "hard";
-    } else {
-      this.difficulty = "";
     }
   }
 

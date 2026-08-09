@@ -1,1 +1,15 @@
-environment.js
+backend/.env
+.env
+**/.env
+.venv/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+.vscode/
+gta-leetcode-extension/
+web-ext-artifacts/
+.web-ext-artifacts/
+*.zip
+*.xpi
+.DS_Store
+Thumbs.db

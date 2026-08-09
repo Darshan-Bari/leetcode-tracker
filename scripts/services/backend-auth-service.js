@@ -13,6 +13,34 @@ export default class BackendAuthService {
       throw new Error("Missing authUrl in BackendAuthService.");
     }
     this.authUrl = authUrl;
+    this.healthUrl = new URL("/health", authUrl).toString();
+  }
+
+  /**
+   * Verify the OAuth backend is reachable and configured before opening GitHub.
+   * This also wakes sleeping deployments before the one-time code is issued.
+   */
+  async ensureAvailable() {
+    let response;
+    try {
+      response = await fetch(this.healthUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+    } catch (error) {
+      throw new Error(
+        "The OAuth service is unreachable. Check your connection, wait a few seconds, and try again."
+      );
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(`The OAuth service health check failed (${response.status}).`);
+    }
+    if (payload.github_configured === false) {
+      throw new Error("The OAuth service is missing its GitHub configuration.");
+    }
   }
 
   /**
@@ -53,7 +81,7 @@ export default class BackendAuthService {
     } catch (error) {
       console.debug("[OAuth] Network error:", error.message);
       throw new Error(
-        `Unable to contact the backend OAuth service: ${error.message}`
+        "The OAuth service connection was interrupted. Wait a few seconds and try GitHub authentication again."
       );
     }
 

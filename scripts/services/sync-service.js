@@ -84,7 +84,8 @@ export default class SyncService {
 
       await this.waitForGithubQueueCompletion();
 
-      const allProcessed = this.stats.processed === this.stats.total;
+      const allProcessed =
+        this.stats.processed === this.stats.total && this.stats.failed === 0;
       const successMessage = `Synchronization completed. Total: ${this.stats.total}, New files: ${this.stats.synced}, Already existed: ${this.stats.skipped}, Failed: ${this.stats.failed}, Processed: ${this.stats.processed}`;
 
       try {
@@ -387,9 +388,6 @@ export default class SyncService {
 
         const problemObj = new Problem();
         problemObj.slug = `${submission.questionId}-${submission.title}`;
-        problemObj.difficulty = this.difficultyLevelToString(
-          problem.difficulty.level
-        );
         problemObj.language = LanguageUtils.getLanguageInfo(submission.lang);
         problemObj.code = submission.code;
 
@@ -440,22 +438,4 @@ export default class SyncService {
     }
   }
 
-  /**
-   * Convert numeric difficulty level to human-readable string.
-   *
-   * @param {number} level - Difficulty level (1=Easy, 2=Medium, 3=Hard)
-   * @returns {string} Human-readable difficulty string
-   */
-  difficultyLevelToString(level) {
-    switch (level) {
-      case 1:
-        return "Easy";
-      case 2:
-        return "Medium";
-      case 3:
-        return "Hard";
-      default:
-        return "Unknown";
-    }
-  }
 }

@@ -1,8 +1,10 @@
   import Problem from "./models/problem.js";
   import RouteService from "./services/route-service.js";
-  import DOMUtils from "./utils/dom-utils.js";
   import GithubService from "./services/github-service.js";
-  import { domElements } from "./constants/dom-elements.js";
+
+  const extensionApi = typeof chrome !== "undefined"
+    ? chrome
+    : (typeof browser !== "undefined" ? browser : null);
 
   /**
    * Main controller class for the LeetCode Tracker extension.
@@ -16,103 +18,100 @@
     constructor() {
       this.problem = new Problem();
       this.githubService = new GithubService();
+      this.inFlightSubmissions = new Set();
+      this.processedSubmissionIds = new Set();
+      this.runtimeMessageHandler = (message) => {
+        if (message?.action !== "syncAcceptedSubmission"
+            || message?.source !== "gta-background") return false;
+        this.handleSubmission(message).catch((error) => {
+          console.error("LeetCode Tracker submission handler failed", error);
+        });
+        return false;
+      };
+      extensionApi?.runtime?.onMessage?.addListener(this.runtimeMessageHandler);
       this.route = new RouteService(() => this.init());
       this.init();
     }
 
     /**
-     * Initialize or reinitialize the tracker for the current problem page.
-     * Loads problem data from DOM and sets up submission monitoring.
-     *
-     * Algorithm:
-     * 1. Extract problem metadata from current page DOM
-     * 2. Wait for submit button to be available and interactive
-     * 3. Attach click handler to monitor submission attempts
+     * Initialize or reinitialize metadata for the current problem route.
      */
-    async init() {
+    init() {
+      this.problem = new Problem();
       this.problem.loadProblemFromDOM();
-      await DOMUtils.waitForElement(
-        `${domElements.submitButton}:not([data-state="closed"])`
-      );
-      this.setupSubmitButton();
     }
 
     /**
-     * Set up event listener on the LeetCode submit button to monitor submissions.
-     * Ensures clean handler attachment by removing any existing listeners first.
-     *
-     * Algorithm:
-     * 1. Remove any previously attached click handlers to prevent duplicates
-     * 2. Create new click handler that clears old results and triggers submission handling
-     * 3. Attach the handler to the submit button element
-     * 4. Track handler attachment state to prevent memory leaks
+     * Upload an authoritative accepted submission delivered by the background
+     * submission monitor. Submission details are preferred over editor DOM
+     * scraping so LeetCode UI changes do not silently prevent synchronization.
      */
-    setupSubmitButton() {
-      const submitButton = document.querySelector(domElements.submitButton);
-
-      if (this.clickHandlerAttached) {
-        submitButton.removeEventListener("click", this.submitClickHandler);
-        this.clickHandlerAttached = false;
+    async handleSubmission(message = {}) {
+      const submissionId = /^\d+$/.test(String(message.submissionId || ""))
+        ? String(message.submissionId)
+        : null;
+      const submissionKey = submissionId || `route:${window.location.pathname}`;
+      if (this.processedSubmissionIds.has(submissionKey)
+          || this.inFlightSubmissions.has(submissionKey)) {
+        return;
       }
+      this.inFlightSubmissions.add(submissionKey);
 
-      this.submitClickHandler = () => {
-        const existingResult = document.querySelector(
-          domElements.submissionResult
-        );
-        if (existingResult) {
-          existingResult.remove();
+      const problem = new Problem();
+      problem.loadProblemFromDOM();
+
+      try {
+        if (message.submission) {
+          problem.applySubmissionDetails(message.submission);
         }
 
-        this.handleSubmission();
-      };
+        if (!problem.slug) {
+          const titleElement = document.querySelector(
+            '[data-cy="question-title"], [data-e2e-locator="question-title"], a[href^="/problems/"]'
+          );
+          const formattedTitle = problem.formatProblemName(
+            titleElement?.textContent || ""
+          );
+          const titleSlug = window.location.pathname.match(/\/problems\/([^/]+)/)?.[1] || "";
+          const fallbackTitle = titleSlug
+            .split("-")
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join("");
+          problem.slug = formattedTitle || fallbackTitle;
+        }
+        if (!problem.language?.extension) problem.extractLanguageFromDOM();
+        if (!problem.code?.trim()) problem.extractCodeFromDOM();
+        problem.validateForSubmission();
 
-      submitButton.addEventListener("click", this.submitClickHandler);
-      this.clickHandlerAttached = true;
-    }
-
-    /**
-     * Handle the submission process after user clicks submit button.
-     * Waits for submission result and processes accepted solutions.
-     *
-     * Algorithm:
-     * 1. Wait for submission result element to appear in DOM
-     * 2. Check if submission was accepted (status === "Accepted")
-     * 3. Check user settings for comment functionality
-     * 4. Show comment popup if enabled, collect user input
-     * 5. Extract language and code information from current DOM state
-     * 6. Submit complete solution data to GitHub via GithubService
-     */
-    async handleSubmission() {
-      await DOMUtils.waitForElement(domElements.submissionResult);
-      const accepted = document.querySelector(domElements.submissionResult);
-      if (accepted && accepted.textContent === "Accepted") {
         let isCommentEnabled = false;
         try {
-          const result = await browser.storage.local.get(
+          const result = await extensionApi.storage.local.get(
             "leetcode_tracker_comment_submission"
           );
-          isCommentEnabled =
-            !!result?.leetcode_tracker_comment_submission;
+          isCommentEnabled = !!result?.leetcode_tracker_comment_submission;
         } catch (_) {
-          // Fallback: leave isCommentEnabled false if storage not accessible
+          // Continue without a comment when storage is temporarily unavailable.
         }
 
         const userComment = isCommentEnabled ? await this.showCommentPopup() : "";
-        this.problem.extractLanguageFromDOM();
-        this.problem.extractCodeFromDOM();
-        try {
-          await this.githubService.submitToGitHub(this.problem, userComment);
-          this.showToast(
-            `Problem ${this.problem.slug || ""} synced successfully`,
-            "success"
-          );
-        } catch (error) {
-          const message = (error && error.message) ? error.message.split("\n")[0].slice(0, 140) : "Unknown error";
-          this.showToast(
-            `Problem ${this.problem.slug || ""} sync failed: ${message}`,
-            "error"
-          );
+        const outcome = await this.githubService.submitToGitHub(problem, userComment);
+        this.processedSubmissionIds.add(submissionKey);
+        if (outcome?.committed) {
+          this.showToast(`Problem ${problem.slug} synced successfully`, "success");
+        } else {
+          this.showToast(`Problem ${problem.slug} is already synchronized`, "success");
         }
+      } catch (error) {
+        const messageText = error?.message
+          ? error.message.split("\n")[0].slice(0, 160)
+          : "Unknown error";
+        this.showToast(
+          `Problem ${problem.slug || ""} sync failed: ${messageText}`,
+          "error"
+        );
+      } finally {
+        this.inFlightSubmissions.delete(submissionKey);
       }
     }
 

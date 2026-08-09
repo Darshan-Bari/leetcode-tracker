@@ -1,8 +1,14 @@
 .git/
-*.zip
-*.md
 .gitignore
-.web-ext-ignore
+.vscode/
+backend/
+gta-leetcode-extension/
+web-ext-artifacts/
 .web-ext-artifacts/
+*.zip
+*.xpi
+leety.zip
+README.md
+AMO_REVIEW_NOTES.md
 replace_chrome.py
 read_pdf.py

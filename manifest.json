@@ -1,19 +1,21 @@
 {
   "name": "LeetCode Tracker",
   "description": "Automatically sync your LeetCode submissions with a GitHub repository. Track your progress and build your coding portfolio effortlessly.",
-  "version": "2.0.1",
+  "version": "2.0.5",
   "manifest_version": 3,
   "author": "Darshan Bari",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "assets/logo-leetcode-tracker/Leetcode-tracker-16.png",
+      "32": "assets/logo-leetcode-tracker/Leetcode-tracker-32.png",
       "48": "assets/logo-leetcode-tracker/Leetcode-tracker-48.png",
       "128": "assets/logo-leetcode-tracker/Leetcode-tracker-128.png"
     }
   },
   "icons": {
     "16": "assets/logo-leetcode-tracker/Leetcode-tracker-16.png",
+    "32": "assets/logo-leetcode-tracker/Leetcode-tracker-32.png",
     "48": "assets/logo-leetcode-tracker/Leetcode-tracker-48.png",
     "128": "assets/logo-leetcode-tracker/Leetcode-tracker-128.png"
   },
@@ -29,21 +31,17 @@
     "tabs",
     "webRequest",
     "webRequestBlocking",
-    "scripting",
-    "activeTab",
     "cookies"
   ],
   "host_permissions": [
     "https://leetcode.com/*",
     "https://api.github.com/*",
-    "https://github.com/*",
     "https://leetcode-tracker-api-0qkb.onrender.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://leetcode.com/*",
-        "https://github.com/*"
+        "https://leetcode.com/*"
       ],
       "js": [
         "scripts/loader.js",
@@ -66,15 +64,25 @@
         "assets/wasted_green.mp4"
       ],
       "matches": [
-        "https://leetcode.com/*",
-        "https://github.com/*"
+        "https://leetcode.com/*"
       ]
     }
   ],
   "browser_specific_settings": {
     "gecko": {
       "id": "leetcode-tracker@darshanbari.dev",
-      "strict_min_version": "140.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "authenticationInfo",
+          "personallyIdentifyingInfo",
+          "websiteActivity",
+          "websiteContent"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
     }
   }
 }

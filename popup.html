@@ -2,267 +2,143 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="css/popup.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="css/bootstrap.min.css" />
-
-    <title>Leetcode Tracker</title>
+    <link rel="stylesheet" href="css/popup.css" />
+    <title>LeetCode Tracker</title>
   </head>
   <body>
-    <div class="content-container">
-      <div>
-        <h1>Leetcode<span>Tracker.</span></h1>
-      </div>
+    <main class="app-shell">
+      <header class="brand-header">
+        <img
+          class="brand-logo"
+          src="assets/logo-leetcode-tracker/Leetcode-tracker-128.png"
+          alt=""
+          width="54"
+          height="54"
+        />
+        <div class="brand-copy">
+          <div class="brand-kicker">CODE. COMMIT. GROW.</div>
+          <h1>LeetCode<span>Tracker</span></h1>
+        </div>
+        <span class="version-badge">v2.0.5</span>
+      </header>
 
-      <div id="authenticate">
-        <h2 class="auth-title">Welcome !</h2>
-        <p>
-          Authenticate with your Github account to track your progress on
-          Leetcode.
+      <section id="authenticate" class="state-panel auth-panel" aria-labelledby="auth-title">
+        <div class="panel-icon" aria-hidden="true">
+          <img src="assets/icons/github/github-mark-white.svg" alt="" />
+        </div>
+        <p class="eyebrow">Connect your workflow</p>
+        <h2 id="auth-title" class="auth-title">Turn accepted into committed.</h2>
+        <p class="panel-description">
+          Connect GitHub once and send accepted LeetCode solutions directly to your portfolio.
         </p>
         <div id="github-authenticate-container">
-          <button
-            type="button"
-            class="button-auth"
-            id="github-authenticate-button"
-          >
-            <img
-              id="github-mark"
-              src="./assets/icons/github/github-mark-white.svg"
-              alt="Github icon"
-            />
-            <span>Authenticate </span>
+          <button type="button" class="button-auth primary-action" id="github-authenticate-button">
+            <img id="github-mark" src="assets/icons/github/github-mark-white.svg" alt="" />
+            <span>Continue with GitHub</span>
           </button>
         </div>
-      </div>
+        <p class="security-note">OAuth with PKCE · Your client secret stays on the backend</p>
+      </section>
 
-      <div id="hook-repo">
-        <h2 class="auth-title">Hook your repository</h2>
-        <p>
-          Create a github repository and enter the name to link it for tracking
-          your progress.
+
+      <section id="hook-repo" class="state-panel" aria-labelledby="repo-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Choose a destination</p>
+            <h2 id="repo-title" class="auth-title">Link your repository</h2>
+          </div>
+          <span class="step-badge">Step 2</span>
+        </div>
+        <p class="panel-description align-left">
+          Use an existing repository you can write to. Add a subfolder if you want solutions grouped under one path.
         </p>
-        <div class="hook-form">
-          <input
-            type="text"
-            id="repo-name"
-            class="form-control"
-            placeholder="Ex: leetcode-solutions"
-          />
-          <input
-            type="text"
-            id="subfolder-path"
-            class="form-control"
-            placeholder="Subfolder path (optional)"
-          />
-          <button type="button" class="hook-form-submit" id="hook-button">
-            Link repository
+        <form id="repo-form" class="hook-form" novalidate>
+          <label for="repo-name">Repository name</label>
+          <div class="input-shell">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 2A1.5 1.5 0 0 0 1 3.5v9A1.5 1.5 0 0 0 2.5 14h11a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13.5 4H8.2L6.7 2.5A1.5 1.5 0 0 0 5.64 2H2.5Z"/></svg>
+            <input type="text" id="repo-name" class="form-control" placeholder="leetcode-solutions" autocomplete="off" aria-describedby="repo-name-error" />
+          </div>
+          <label for="subfolder-path">Subfolder <span>Optional</span></label>
+          <div class="input-shell">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M6.2 2.4a1 1 0 0 1 1.6 0l4.8 6.4a1 1 0 0 1-.8 1.6H9v2.1a2 2 0 0 1-4 0v-2.1H2.2a1 1 0 0 1-.8-1.6l4.8-6.4Z"/></svg>
+            <input type="text" id="subfolder-path" class="form-control" placeholder="solutions/leetcode" autocomplete="off" />
+          </div>
+          <div id="repo-name-error" role="alert" aria-live="polite"></div>
+          <button type="submit" class="hook-form-submit primary-action" id="hook-button">
+            <span>Link repository</span>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m9.5 3.5 4.5 4.5-4.5 4.5-1.1-1.1 2.6-2.65H2v-1.5h9L8.4 4.6l1.1-1.1Z"/></svg>
           </button>
-          <div id="repo-name-error" class="text-danger font-italic"></div>
-        </div>
+        </form>
+        <button type="button" class="text-button" id="change-account-button">Use a different GitHub account</button>
+      </section>
 
-        <div class="change-account-container">
-          <span class="change-account-link" id="change-account-button">
-            Change github account
-          </span>
-        </div>
-      </div>
+      <section id="authenticated" aria-label="LeetCode Tracker dashboard">
+        <a href="https://github.com" id="repository-link" class="repository-link">
+          <span>Open linked repository</span>
+          <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M9 1h6v6h-1.5V3.56L7.53 9.53 6.47 8.47l5.97-5.97H9V1Z"/><path d="M13.5 9v4.5h-11v-11H7V1H2.5A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5V9h-1.5Z"/></svg>
+        </a>
 
-      <div id="authenticated">
-        <div id="stats-container">
-          <div id="stats-content">
-            <div id="loading-container">
-              <div class="modern-loader">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-              </div>
+
+        <section class="dashboard-card settings-card" aria-labelledby="settings-title">
+          <div class="card-heading compact-heading">
+            <div><p class="eyebrow">Preferences</p><h2 id="settings-title">Sync settings</h2></div>
+            <svg class="heading-icon" aria-hidden="true" viewBox="0 0 16 16"><path d="M9.6 1.4 10 3a5.5 5.5 0 0 1 1.1.65l1.55-.48 1.2 2.08-1.17 1.12c.05.37.05.88 0 1.25l1.17 1.13-1.2 2.08-1.55-.48A5.5 5.5 0 0 1 10 11l-.4 1.6H7.2L6.8 11a5.5 5.5 0 0 1-1.1-.65l-1.55.48-1.2-2.08 1.17-1.13a5 5 0 0 1 0-1.25L2.95 5.25l1.2-2.08 1.55.48A5.5 5.5 0 0 1 6.8 3l.4-1.6h2.4ZM8.4 9.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z"/></svg>
+          </div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <div><div class="user-infos-item-label" id="submit-code-label">Submit only new solutions</div><div class="setting-help">Skip commits when the saved code is unchanged.</div></div>
+              <label class="switch" aria-labelledby="submit-code-label"><input type="checkbox" id="submit-code-checkbox" /><span class="slider round"></span></label>
             </div>
-
-            <div id="stats">
-              <div class="stats-label">Easy</div>
-              <div class="stats-label">Medium</div>
-              <div class="stats-label">Hard</div>
-              <div id="easy" class="value">-</div>
-              <div id="medium" class="value">-</div>
-              <div id="hard" class="value">-</div>
+            <div class="setting-row">
+              <div><div class="user-infos-item-label" id="multiple-label">Keep multiple submissions</div><div class="setting-help">Store timestamped versions grouped by language.</div></div>
+              <label class="switch" aria-labelledby="multiple-label"><input type="checkbox" id="multiple-submission-checkbox" /><span class="slider round"></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="user-infos-item-label" id="comment-label">Add a submission note</div><div class="setting-help">Prompt for an optional note before committing.</div></div>
+              <label class="switch" aria-labelledby="comment-label"><input type="checkbox" id="comment-submission-checkbox" /><span class="slider round"></span></label>
             </div>
           </div>
+        </section>
 
-          <div style="text-align: center; margin-top: 5px">
-            <a
-              href="https://github.com"
-              target="_blank"
-              style="justify-content: center"
-              id="repository-link"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-box-arrow-up-right"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
-                />
-                <path
-                  fill-rule="evenodd"
-                  d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
-                />
-              </svg>
-              <span>Show your repository</span>
-            </a>
+        <section class="dashboard-card sync-card" aria-labelledby="sync-title">
+          <div class="sync-copy">
+            <div class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M12.9 6A5 5 0 0 0 4.14 3.82l-.77-.64A6 6 0 0 1 13.92 6H15l-2 2.4L11 6h1.9ZM3.1 10A5 5 0 0 0 11.86 12.18l.77.64A6 6 0 0 1 2.08 10H1l2-2.4L5 10H3.1Z"/></svg></div>
+            <div><h2 id="sync-title">Sync your history</h2><p>Import previously accepted LeetCode submissions.</p></div>
           </div>
-        </div>
-
-        <div class="user-infos">
-          <h3 class="subtitle">Settings</h3>
-
-          <div class="user-infos-content">
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">
-                  Submit only new solutions
-                </div>
-              </div>
-              <div>
-                <label class="switch">
-                  <input type="checkbox" checked id="submit-code-checkbox" />
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </div>
-
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">
-                  Sync multiple submissions for the same problem
-                </div>
-              </div>
-              <div>
-                <label class="switch">
-                  <input
-                    type="checkbox"
-                    checked
-                    id="multiple-submission-checkbox"
-                  />
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </div>
-
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">
-                  Add comments to your submissions
-                </div>
-              </div>
-              <div>
-                <label class="switch">
-                  <input
-                    type="checkbox"
-                    checked
-                    id="comment-submission-checkbox"
-                  />
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </div>
-
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">
-                  Sync previously solved problems
-                </div>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  class="primary-button"
-                  id="sync-button"
-                  style="display: flex"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"
-                    />
-                    <path
-                      fill-rule="evenodd"
-                      d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"
-                    />
-                  </svg>
-                  <span style="margin-left: 5px">Sync</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">Repository</div>
-                <div class="user-infos-item-value" id="repository-name">
-                  repo name
-                </div>
-              </div>
-              <div>
-                <button type="button" class="primary-button" id="unlink-button">
-                  Unlink
-                </button>
-              </div>
-            </div>
-
-            <div class="user-infos-item">
-              <div>
-                <div class="user-infos-item-label">Username</div>
-                <div class="user-infos-item-value" id="github-username">
-                  username
-                </div>
-              </div>
-              <div>
-                <button type="button" class="primary-button" id="logout-button">
-                  Logout
-                </button>
-              </div>
-            </div>
+          <button type="button" class="primary-button sync-button" id="sync-button">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M12.9 6A5 5 0 0 0 4.14 3.82l-.77-.64A6 6 0 0 1 13.92 6H15l-2 2.4L11 6h1.9ZM3.1 10A5 5 0 0 0 11.86 12.18l.77.64A6 6 0 0 1 2.08 10H1l2-2.4L5 10H3.1Z"/></svg>
+            <span>Sync</span>
+          </button>
+          <div id="sync-status-container" role="status" aria-live="polite">
+            <div id="sync-status"></div><div id="sync-time"></div>
           </div>
-        </div>
-      </div>
-    </div>
+        </section>
 
-    <div>
-      <div
-        id="sync-status-container"
-        style="text-align: center; margin-top: 5px"
-      >
-        <div id="sync-status" style="font-size: 12px"></div>
-        <div id="sync-time" style="font-size: 12px"></div>
-      </div>
-    </div>
+        <section class="dashboard-card account-card" aria-labelledby="account-title">
+          <div class="card-heading compact-heading"><div><p class="eyebrow">Connection</p><h2 id="account-title">Account</h2></div></div>
+          <div class="account-row">
+            <div class="account-avatar repo-avatar" aria-hidden="true">R</div>
+            <div class="account-copy"><span>Repository</span><strong id="repository-name">repo name</strong></div>
+            <button type="button" class="secondary-button" id="unlink-button">Unlink</button>
+          </div>
+          <div class="account-row">
+            <div class="account-avatar" aria-hidden="true"><img src="assets/icons/github/github-mark-white.svg" alt="" /></div>
+            <div class="account-copy"><span>GitHub account</span><strong id="github-username">username</strong></div>
+            <button type="button" class="secondary-button danger-button" id="logout-button">Logout</button>
+          </div>
+        </section>
+      </section>
+    </main>
 
-    <div id="contribute-container">
+    <footer id="contribute-container">
       <a href="https://github.com/Darshan-Bari/leetcode-tracker" class="link">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          class="bi bi-github"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"
-          />
-        </svg>
-        <span>Contribute to this project on Github</span>
+        <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.7 7.7 0 0 1 8 3.86c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+        <span>View project on GitHub</span>
+        <svg class="footer-arrow" aria-hidden="true" viewBox="0 0 16 16"><path d="m9.5 3.5 4.5 4.5-4.5 4.5-1.1-1.1 2.6-2.65H2v-1.5h9L8.4 4.6l1.1-1.1Z"/></svg>
       </a>
-    </div>
+    </footer>
 
     <script src="popup.js"></script>
   </body>

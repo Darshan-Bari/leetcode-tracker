@@ -11,34 +11,51 @@ export default class LeetCodeService {
   }
 
   /**
-   * Fetches all questions from LeetCode GraphQL API with their difficulty levels.
-   * Used to get comprehensive problem metadata.
-   *
-   * @returns {Promise<Object[]>} Array of question objects with questionId and difficulty
+   * Send a LeetCode request with credentials, trying open tab proxy first with direct fetch fallback.
    */
-  async fetchAllQuestionsDifficulty() {
-    const graphqlQuery = {
-      query: `
-        query allQuestions {
-          allQuestions {
-            questionId
-            difficulty
-          }
-        }
-      `,
-    };
-
+  async fetchFromLeetCode(url, options = {}) {
+    // Strategy 1: Try proxying fetch through an open LeetCode tab if available
     try {
-      const response = await fetch("https://leetcode.com/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(graphqlQuery),
-      });
+      const tabs = await browser.tabs.query({ url: "*://*.leetcode.com/*" });
+      if (tabs && tabs.length > 0) {
+        const activeTab = tabs.find((t) => t.active) || tabs[0];
+        const proxyResponse = await browser.tabs.sendMessage(activeTab.id, {
+          action: "proxyFetch",
+          url,
+          options,
+        });
 
-      const data = await response.json();
-      return data.data.allQuestions;
+        if (proxyResponse && proxyResponse.success) {
+          const status = proxyResponse.status || 0;
+          return {
+            ok: typeof proxyResponse.ok === "boolean"
+              ? proxyResponse.ok
+              : status >= 200 && status < 300,
+            status,
+            json: async () => proxyResponse.data,
+            text: async () =>
+              typeof proxyResponse.data === "string"
+                ? proxyResponse.data
+                : JSON.stringify(proxyResponse.data),
+          };
+        }
+      }
+    } catch (tabError) {
+      console.warn("Tab proxy fetch unavailable, falling back to direct fetch:", tabError);
+    }
+
+    // Strategy 2: Direct background fetch fallback
+    try {
+      const mergedOptions = {
+        credentials: "include",
+        ...options,
+      };
+      return await fetch(url, mergedOptions);
     } catch (error) {
-      return [];
+      console.error("fetchFromLeetCode failed:", error);
+      throw new Error(
+        "LeetCode is unreachable. Open leetcode.com in Firefox, confirm you are signed in, and try again."
+      );
     }
   }
 
@@ -61,10 +78,13 @@ export default class LeetCodeService {
         return this.cachedProblems.filter((problem) => problem.status === "ac");
       }
 
-      const response = await fetch("https://leetcode.com/api/problems/all/", {
-        method: "GET",
-        credentials: "include", // Include cookies for authentication
-      });
+      const response = await this.fetchFromLeetCode(
+        "https://leetcode.com/api/problems/all/",
+        {
+          method: "GET",
+          credentials: "include", // Include cookies for authentication
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -122,7 +142,9 @@ export default class LeetCodeService {
 
       // Fetch all submissions with pagination
       while (hasNext) {
-        const submissionsResponse = await fetch("https://leetcode.com/graphql", {
+        const submissionsResponse = await this.fetchFromLeetCode(
+          "https://leetcode.com/graphql",
+          {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -260,7 +282,9 @@ export default class LeetCodeService {
 
         const submissionId = submissionsByLang[lang].id;
 
-        const detailsResponse = await fetch("https://leetcode.com/graphql", {
+        const detailsResponse = await this.fetchFromLeetCode(
+          "https://leetcode.com/graphql",
+          {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

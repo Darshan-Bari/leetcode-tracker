@@ -64,11 +64,17 @@ export default class GithubService {
     this.problem = problem;
     this.comment = comment;
 
-    if (
-      this.submissionInProgress ||
-      !this.configurationService.isConfigValid(this.userConfig)
-    ) {
-      return;
+    if (this.submissionInProgress) {
+      throw new Error("Another solution is already being synchronized.");
+    }
+    if (!this.configurationService.isConfigValid(this.userConfig)) {
+      throw new Error(
+        "GitHub is not connected. Authenticate and link a repository in the extension popup."
+      );
+    }
+    if (!problem?.slug || !problem?.code?.trim()
+        || !problem?.language?.extension || !problem?.language?.langName) {
+      throw new Error("The accepted solution data is incomplete. Submit the solution again.");
     }
 
     this.submissionInProgress = true;
@@ -88,15 +94,19 @@ export default class GithubService {
           newContent
         ));
 
-        // Skip update if setting is enabled and content hasn't changed
         if (skipDuplicates && contentIsSame) {
-          return;
+          return { committed: false, status: "unchanged" };
         }
 
-        await this.updateFile(fileExists);
-      } else {
-        await this.createFile();
+        const response = await this.updateFile(fileExists);
+        return { committed: true, status: "updated", response };
       }
+
+      const response = await this.createFile();
+      if (response.status === 422) {
+        return { committed: false, status: "exists", response };
+      }
+      return { committed: response.ok, status: "created", response };
     } finally {
       this.submissionInProgress = false;
     }
@@ -142,8 +152,7 @@ export default class GithubService {
    * 3. Create the main solution file with formatted code
    * 4. Handle file conflicts gracefully (422 status for existing files)
    * 5. Create README file if problem description is available
-   * 6. Update difficulty statistics if not in sync mode
-   * 7. Log all operations with instance ID for debugging
+   * 6. Log all operations with instance ID for debugging
    *
    * @param {boolean} isSyncing - Whether this is part of a bulk sync operation
    * @returns {Promise<Response>} GitHub API response object
@@ -183,8 +192,6 @@ export default class GithubService {
         );
       }
 
-      const resultJson = await result.json();
-
       if (result.status === 201) {
         try {
           // Create README only if description exists and is meaningful
@@ -207,18 +214,6 @@ export default class GithubService {
           }
         } catch (readmeError) {
           // Don't fail main file creation due to README issues
-        } finally {
-          // Update statistics only in normal mode (not during bulk sync)
-          if (!isSyncing) {
-            try {
-              browser.runtime.sendMessage({
-                type: "updateDifficultyStats",
-                difficulty: this.problem.difficulty,
-              });
-            } catch (messageError) {
-              // Statistics update failed but don't fail the main operation
-            }
-          }
         }
       }
 
@@ -510,7 +505,9 @@ export default class GithubService {
       const response = await fetch(url, options);
       return response;
     } catch (error) {
-      throw error;
+      throw new Error(
+        "GitHub is unreachable while syncing. Check your connection and extension permissions, then retry."
+      );
     }
   }
 
